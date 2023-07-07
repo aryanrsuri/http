@@ -60,7 +60,6 @@ pub const http_server = struct {
     pub fn handler(self: *Self) !Request {
         defer self.connection.stream.close();
         const req = try self.connection.stream.reader().readUntilDelimiterAlloc(self.alloc, '\n', std.math.maxInt(usize));
-        try self.connection.stream.writer().print("{s} \n {any}\n", .{ req, req });
         var iter = std.mem.tokenize(u8, req, " ");
         var map = std.StringHashMap([]const u8).init(self.alloc);
 
@@ -72,14 +71,12 @@ pub const http_server = struct {
         }
         var Req: Request = .{ .Method = try parse_method(iter.next().?), .Uri = iter.next().?, .Version = iter.next().?, .Headers = map };
 
-        // print block
-
+        // Text Response from server
         {
-            try self.connection.stream.writer().print("Method: {any} \n uri: {any} \n version: {any} \n", .{ Req.Method, Req.Uri, Req.Version });
-            // std.debug.print("\n ------new res ----- \nMethod: {any} \nUri: {s} \n Version: {s} \n", .{ Req.Method, Req.Uri, Req.Version });
+            try self.connection.stream.writer().print(" \n --------- \n Method: {any} \n Uri: {s} \n Version: {s} \n", .{ Req.Method, Req.Uri, Req.Version });
             var iter_v = Req.Headers.iterator();
             while (iter_v.next()) |val| {
-                std.debug.print("{s}: {s}\n", .{ val.key_ptr.*, val.value_ptr.* });
+                try self.connection.stream.writer().print(" {s}: {s}\n", .{ val.key_ptr.*, val.value_ptr.* });
             }
         }
 
@@ -87,7 +84,11 @@ pub const http_server = struct {
     }
 
     fn parse_method(buffer: []const u8) !http.Method {
-        return Map.get(buffer) orelse error.UnknownMethod;
+        return Map_Method.get(buffer) orelse error.UnknownMethod;
+    }
+
+    fn parse_version(buffer: []const u8) !http.Version {
+        return Map_Version.get(buffer) orelse error.UnknownVersion;
     }
 
     // pub fn request(self: *Self, req: Request) !void {
@@ -104,7 +105,7 @@ pub const http_server = struct {
     }
 };
 
-pub const Map = std.ComptimeStringMap(http.Method, .{
+pub const Map_Method = std.ComptimeStringMap(http.Method, .{
     .{ "GET", .GET },
     .{ "HEAD", .HEAD },
     .{ "POST", .POST },
@@ -114,4 +115,9 @@ pub const Map = std.ComptimeStringMap(http.Method, .{
     .{ "OPTIONS", .OPTIONS },
     .{ "TRACE", .TRACE },
     .{ "PATCH", .PATCH },
+});
+
+pub const Map_Version = std.ComptimeStringMap(http.Version, .{
+    .{ " HTTP/1.1", .@"HTTP/1.1" },
+    .{ " HTTP/1.0", .@"HTTP/1.0" },
 });
