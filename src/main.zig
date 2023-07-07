@@ -13,5 +13,5 @@ const gpa = s.allocator();
 pub fn main() !void {
     var http = server.http_server.init(gpa, "127.0.0.1", 8080);
     defer http.deinit();
-    try http.accept();
+    _ = try http.accept();
 }
