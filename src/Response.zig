@@ -26,13 +26,15 @@ pub const Response = struct {
     }
 
     pub fn response(self: *Response, payload: Payload) !void {
-        try self.writer.print(" \n RESPONSE PAYLOAD \n Version: {s} \n Status: ({any}) ({s})\n", .{ self.version, payload.status.code(), payload.status.string() });
-        if (payload.headers) |headers| {
-            var iter = headers.iterator();
-            while (iter.next()) |val| {
-                try self.writer.print(" {s}: {s}\n", .{ val.key_ptr.*, val.value_ptr.* });
-            }
-        }
+        try std.io.getStdOut().writer().print("    {s} {any} \r\n", .{ self.version.to_string(), payload.status.code() });
+        _ = try self.writer.print("{s} {any} \r\n", .{ self.version.to_string(), payload.status.code() });
+        _ = try self.writer.write(payload.body);
+        // if (payload.headers) |headers| {
+        //     var iter = headers.iterator();
+        //     while (iter.next()) |val| {
+        //         try self.writer.print(" {s}: {s}\n", .{ val.key_ptr.*, val.value_ptr.* });
+        //     }
+        // }
     }
 };
 
@@ -40,16 +42,21 @@ pub const Payload = struct {
     body: []const u8,
     status: Status,
     headers: ?std.StringHashMap([]const u8) = undefined,
+
+    pub fn init(buffer: []const u8, status: Status, headers: ?std.StringHashMap([]const u8)) Payload {
+        return .{ .body = buffer, .status = status, .headers = headers };
+    }
 };
+
 pub const Status = enum(u10) {
     Ok = 200,
     NotFound = 404,
 
-    pub fn code(self: *Status) u10 {
+    pub fn code(self: Status) u10 {
         return @enumToInt(self);
     }
 
-    pub fn string(self: *Status) []const u8 {
+    pub fn string(self: Status) []const u8 {
         return @tagName(self);
     }
 };

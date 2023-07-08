@@ -12,7 +12,7 @@ const Server = @import("Server.zig").Server;
 pub fn main() !void {
     var heap = std.heap.GeneralPurposeAllocator(.{}){};
     const gpa = heap.allocator();
-    var http = Server.init(gpa, "127.0.0.1", 6969);
+    var http = Server.init(gpa, "127.0.0.1", 8080);
     defer http.deinit();
     _ = try http.accept();
 }

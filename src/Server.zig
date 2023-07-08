@@ -8,6 +8,8 @@
 const Request = @import("Request.zig").Request;
 const ParseVersion = @import("Request.zig").parse_version;
 const Response = @import("Response.zig").Response;
+const Payload = @import("Response.zig").Payload;
+const Routes = @import("Routes.zig").Routes;
 const std = @import("std");
 const http = std.http;
 const stream = std.net.StreamServer;
@@ -54,23 +56,31 @@ pub const Server = struct {
     pub fn accept(self: *Self) !void {
         while (true) {
             const connection = self.serve.accept() catch {
-                @panic("Connection attempt unsuccesful");
+                @panic("Connection attempt unsuccsesful");
             };
             self.connection = connection;
             _ = try self.handler();
         }
     }
 
-    pub fn handler(self: *Self) !Handler {
+    pub fn handler(self: *Self) !void {
         defer self.connection.stream.close();
         var request: Request = try Request.init(self.allocator, self.connection.stream.reader());
-        var response: Response = Response.init(self.connection.stream.writer(), request.Version);
         try request.print(self.connection.stream.writer());
-        return Handler{ .req = &request, .res = &response };
+        var response: Response = Response.init(self.connection.stream.writer(), request.Version);
+        _ = try Handler.Fn(&request, &response);
+
+        // return HTTPContext;
     }
 };
 
 pub const Handler = struct {
+    const Self = @This();
     req: *Request,
     res: *Response,
+
+    pub fn Fn(req: *Request, res: *Response) !Self {
+        _ = try Routes.init(req, res, req.Uri);
+        return .{ .req = req, .res = res };
+    }
 };

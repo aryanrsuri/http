@@ -43,14 +43,13 @@ pub const Request = struct {
     }
 
     pub fn print(self: *Request, writer: net.Stream.Writer) !void {
-        // server side printing ? good idea ?
-        try std.io.getStdOut().writer().print("\n{s} {s} {s}", .{ to_string_method(&self.Method), self.Uri, self.Version.to_string() });
-
-        try writer.print(" \n REQUEST PAYLOAD: \n Method: {any} \n Uri: {s} \n Version: {any} \n", .{ self.Method, self.Uri, self.Version });
-        var iter_v = self.Headers.iterator();
-        while (iter_v.next()) |val| {
-            try writer.print(" {s}: {s}\n", .{ val.key_ptr.*, val.value_ptr.* });
-        }
+        try std.io.getStdOut().writer().print("\n    {s} {s} {s}\n", .{ to_string_method(&self.Method), self.Uri, self.Version.to_string() });
+        _ = writer;
+        // // try writer.print(" \n REQUEST \n Method: {s} \n Uri: {s} \n Version: {s} \n", .{ to_string_method(&self.Method), self.Uri, self.Version.to_string() });
+        // var iter_v = self.Headers.iterator();
+        // while (iter_v.next()) |val| {
+        //     try std.io.getStdOut().writer().print(" {s}: {s}\n", .{ val.key_ptr.*, val.value_ptr.* });
+        // }
     }
 };
 
