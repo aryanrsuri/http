@@ -7,11 +7,11 @@ There is http.Client API in zig std... Should I use it? Not sure how to refactor
 
 My Routes.zig file might need a restart, as I am not sure how to format this
   Essentially, do i switch on http Methods or are those defined in Request struct first
-  @Blocker here
+  @Blocker 
 
 I have created a .Response field in my Request struct, while this is common, I need to explore how this changes Handler and Routing
   @Research
 
 My Request headers and Response headers are identical, which is not correct but not sure how to change this...
   A side-effect is that I couldn't send over text/plain or application/json as this is not set in req Headers Accept
-  @Blocker here, i need to figure this one out
+  @Blocker 
