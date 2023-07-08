@@ -65,10 +65,9 @@ pub const Server = struct {
 
     pub fn handler(self: *Self) !void {
         defer self.connection.stream.close();
-        var request: Request = try Request.init(self.allocator, self.connection.stream.reader());
+        var request: Request = try Request.init(self.allocator, self.connection.stream.writer(), self.connection.stream.reader());
         try request.print(self.connection.stream.writer());
-        var response: Response = Response.init(self.connection.stream.writer(), request.Version);
-        _ = try Handler.Fn(&request, &response);
+        _ = try Handler.Fn(&request);
 
         // return HTTPContext;
     }
@@ -76,11 +75,9 @@ pub const Server = struct {
 
 pub const Handler = struct {
     const Self = @This();
-    req: *Request,
-    res: *Response,
-
-    pub fn Fn(req: *Request, res: *Response) !Self {
-        _ = try Routes.init(req, res, req.Uri);
-        return .{ .req = req, .res = res };
+    res: *Response = undefined,
+    pub fn Fn(req: *Request) !Self {
+        _ = try Routes.init(req, req.Uri);
+        return .{ .res = &req.Response };
     }
 };

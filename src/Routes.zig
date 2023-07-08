@@ -19,6 +19,11 @@ const @"404" = @embedFile("404.html");
 const index = @embedFile("index.html");
 const about = @embedFile("index.html");
 
+pub const Accept = enum {
+    @"text/html",
+    @"text/plain",
+    @"application/json",
+};
 pub const radix = std.ComptimeStringMap([]const u8, .{
     .{
         "/",
@@ -31,18 +36,23 @@ pub const radix = std.ComptimeStringMap([]const u8, .{
 });
 
 pub const Routes = struct {
-    pub fn init(req: *Request, res: *Response, path: []const u8) !void {
+    pub fn init(req: *Request, path: []const u8) !void {
         switch (req.Method) {
             .GET => {
                 const r = radix.get(path);
                 if (r) |p| {
                     var status = Status.Ok;
                     var payload = Payload.init(p, status, req.Headers);
-                    try res.response(payload);
+                    return try req.Response.response(payload, "text/html");
+                }
+                if (std.mem.eql(u8, "/aryan", path)) {
+                    var status = Status.Ok;
+                    var payload = Payload.init(" { aryan }", status, req.Headers);
+                    return try req.Response.response(payload, "application/json");
                 } else {
                     var status = Status.NotFound;
                     var payload = Payload.init(@"404", status, req.Headers);
-                    try res.response(payload);
+                    return try req.Response.response(payload, "text/html");
                 }
             },
             else => unreachable,

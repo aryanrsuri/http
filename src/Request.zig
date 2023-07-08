@@ -9,22 +9,28 @@ const std = @import("std");
 const http = std.http;
 const net = std.net;
 const Method = http.Method;
+const Response = @import("Response.zig");
 
 pub const Request = struct {
     Method: Method,
     Uri: []const u8,
     Version: Version,
     Reader: net.Stream.Reader,
+    Writer: net.Stream.Writer,
     Headers: std.StringHashMap([]const u8) = undefined,
+    Response: Response.Response,
 
     /// Create a new Request
     /// @param {std.mem.Allocator} allocator for hash map
     /// @param {net.Stream.reader} reader
     /// @returns Request or error
-    pub fn init(allocator: std.mem.Allocator, reader: net.Stream.Reader) !Request {
+    pub fn init(allocator: std.mem.Allocator, writer: net.Stream.Writer, reader: net.Stream.Reader) !Request {
         const request = try reader.readUntilDelimiterAlloc(allocator, '\n', std.math.maxInt(usize));
         var iter = std.mem.tokenize(u8, request, " ");
         var map = std.StringHashMap([]const u8).init(allocator);
+        var M = try parse_method(iter.next().?);
+        var U = iter.next().?;
+        var V = try Version.parse(iter.next().?);
 
         while (true) {
             const headers = try reader.readUntilDelimiterAlloc(allocator, '\n', std.math.maxInt(usize));
@@ -34,11 +40,16 @@ pub const Request = struct {
         }
 
         return .{
-            .Method = try parse_method(iter.next().?),
-            .Uri = iter.next().?,
-            .Version = try Version.parse(iter.next().?),
+            .Method = M,
+            .Uri = U,
+            .Version = V,
+            .Writer = writer,
             .Reader = reader,
             .Headers = map,
+            .Response = Response.Response.init(
+                writer,
+                V,
+            ),
         };
     }
 
@@ -98,3 +109,31 @@ pub const Version = enum {
         return @tagName(version.*);
     }
 };
+
+//     var req: Request = .{
+//         .uri = uri,
+//         .client = client,
+//         .connection = conn,
+//         .headers = headers,
+//         .method = method,
+//         .version = options.version,
+//         .redirects_left = options.max_redirects,
+//         .handle_redirects = options.handle_redirects,
+//         .response = .{
+//             .status = undefined,
+//             .reason = undefined,
+//             .version = undefined,
+//             .headers = http.Headers{ .allocator = client.allocator, .owned = false },
+//             .parser = switch (options.header_strategy) {
+//                 .dynamic => |max| proto.HeadersParser.initDynamic(max),
+//                 .static => |buf| proto.HeadersParser.initStatic(buf),
+//             },
+//         },
+//         .arena = undefined,
+//     };
+//     errdefer req.deinit();
+//
+//     req.arena = std.heap.ArenaAllocator.init(client.allocator);
+//
+//     return req;
+// }

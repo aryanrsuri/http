@@ -6,6 +6,7 @@
 //!
 //!
 const Version = @import("Request.zig").Version;
+const Accept = @import("Routes.zig").Accept;
 const Writer = std.net.Stream.Writer;
 const std = @import("std");
 const http = std.http;
@@ -25,16 +26,17 @@ pub const Response = struct {
         };
     }
 
-    pub fn response(self: *Response, payload: Payload) !void {
+    pub fn response(self: *Response, payload: Payload, headers: []const u8) !void {
         try std.io.getStdOut().writer().print("    {s} {any} \r\n", .{ self.version.to_string(), payload.status.code() });
         _ = try self.writer.print("{s} {any} \r\n", .{ self.version.to_string(), payload.status.code() });
+        _ = try self.writer.print("{s}\r\n", .{headers});
         _ = try self.writer.write(payload.body);
-        // if (payload.headers) |headers| {
-        //     var iter = headers.iterator();
-        //     while (iter.next()) |val| {
-        //         try self.writer.print(" {s}: {s}\n", .{ val.key_ptr.*, val.value_ptr.* });
-        //     }
-        // }
+        _ = try 
+
+        var iter = payload.headers.?.iterator();
+        while (iter.next()) |kv| {
+            try std.io.getStdOut().writer().print(" {s} : {s} \r\n", .{ kv.key_ptr.*, kv.value_ptr.* });
+        }
     }
 };
 
@@ -53,7 +55,7 @@ pub const Status = enum(u10) {
     NotFound = 404,
 
     pub fn code(self: Status) u10 {
-        return @enumToInt(self);
+        return @intFromEnum(self);
     }
 
     pub fn string(self: Status) []const u8 {
