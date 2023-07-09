@@ -76,7 +76,7 @@ pub const Handler = struct {
     const Self = @This();
     res: *Response = undefined,
     pub fn Fn(req: *Request) !Self {
-        _ = try Routes.init(req, req.Uri);
+        _ = try Routes.init(req);
         return .{ .res = &req.Response };
     }
 };

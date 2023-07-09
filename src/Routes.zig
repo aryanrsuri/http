@@ -36,23 +36,30 @@ pub const radix = std.ComptimeStringMap([]const u8, .{
 });
 
 pub const Routes = struct {
-    pub fn init(req: *Request, path: []const u8) !void {
+    pub fn init(req: *Request) !void {
+        const path = req.Uri;
+        // var s = std.heap.GeneralPurposeAllocator(.{}){};
+        // const gpa = s.allocator();
         switch (req.Method) {
             .GET => {
                 const r = radix.get(path);
                 if (r) |p| {
                     var status = Status.Ok;
                     var payload = Payload.init(p, status, req.Headers);
-                    return try req.Response.response(payload, "text/html");
+                    return try req.Response.response(payload);
                 }
                 if (std.mem.eql(u8, "/aryan", path)) {
                     var status = Status.Ok;
-                    var payload = Payload.init(" { aryan }", status, req.Headers);
-                    return try req.Response.response(payload, "application/json");
+                    // var header = std.StringHashMap([]const u8).init(gpa);
+                    // try header.put("Content-Type", "application/json");
+                    // defer header.deinit();
+
+                    var payload = Payload.init("{ aryan }", status, req.Headers);
+                    return try req.Response.response(payload);
                 } else {
                     var status = Status.NotFound;
                     var payload = Payload.init(@"404", status, req.Headers);
-                    return try req.Response.response(payload, "text/html");
+                    return try req.Response.response(payload);
                 }
             },
             else => unreachable,

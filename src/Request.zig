@@ -9,7 +9,7 @@ const std = @import("std");
 const http = std.http;
 const net = std.net;
 const Method = http.Method;
-const Response = @import("Response.zig");
+const Response = @import("Response.zig").Response;
 
 pub const Request = struct {
     Method: Method,
@@ -17,8 +17,8 @@ pub const Request = struct {
     Version: Version,
     Reader: net.Stream.Reader,
     Writer: net.Stream.Writer,
-    Headers: std.StringHashMap([]const u8) = undefined,
-    Response: Response.Response,
+    Headers: std.StringHashMap([]const u8),
+    Response: Response,
 
     /// Create a new Request
     /// @param {std.mem.Allocator} allocator for hash map
@@ -36,6 +36,7 @@ pub const Request = struct {
             const headers = try reader.readUntilDelimiterAlloc(allocator, '\n', std.math.maxInt(usize));
             if (headers.len == 1 and std.mem.eql(u8, headers, "\r")) break;
             var iter_h = std.mem.tokenize(u8, headers, ":");
+
             try map.put(iter_h.next().?, iter_h.rest());
         }
 
@@ -46,7 +47,7 @@ pub const Request = struct {
             .Writer = writer,
             .Reader = reader,
             .Headers = map,
-            .Response = Response.Response.init(
+            .Response = Response.init(
                 writer,
                 V,
             ),

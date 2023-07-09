@@ -26,24 +26,21 @@ pub const Response = struct {
         };
     }
 
-    pub fn response(self: *Response, payload: Payload, headers: []const u8) !void {
+    pub fn response(self: *Response, payload: Payload) !void {
         try std.io.getStdOut().writer().print("    {s} {any} \r\n", .{ self.version.to_string(), payload.status.code() });
         _ = try self.writer.print("{s} {any} \r\n", .{ self.version.to_string(), payload.status.code() });
-        _ = try self.writer.print("{s}\r\n", .{headers});
-        _ = try self.writer.write(payload.body);
-        _ = try 
-
         var iter = payload.headers.?.iterator();
         while (iter.next()) |kv| {
-            try std.io.getStdOut().writer().print(" {s} : {s} \r\n", .{ kv.key_ptr.*, kv.value_ptr.* });
+            try self.writer.print(" {s} : {s} \r\n", .{ kv.key_ptr.*, kv.value_ptr.* });
         }
+        _ = try self.writer.write(payload.body);
     }
 };
 
 pub const Payload = struct {
     body: []const u8,
     status: Status,
-    headers: ?std.StringHashMap([]const u8) = undefined,
+    headers: ?std.StringHashMap([]const u8),
 
     pub fn init(buffer: []const u8, status: Status, headers: ?std.StringHashMap([]const u8)) Payload {
         return .{ .body = buffer, .status = status, .headers = headers };
@@ -55,7 +52,7 @@ pub const Status = enum(u10) {
     NotFound = 404,
 
     pub fn code(self: Status) u10 {
-        return @intFromEnum(self);
+        return @enumToInt(self);
     }
 
     pub fn string(self: Status) []const u8 {
