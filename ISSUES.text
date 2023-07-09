@@ -15,3 +15,6 @@ I have created a .Response field in my Request struct, while this is common, I n
 My Request headers and Response headers are identical, which is not correct but not sure how to change this...
   A side-effect is that I couldn't send over text/plain or application/json as this is not set in req Headers Accept
   @Blocker 
+
+Look at http.Client and use that pardignm to implement the Req Res for http
+  @Blocker
