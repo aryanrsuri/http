@@ -68,7 +68,6 @@ pub const Server = struct {
         var request: Request = try Request.init(self.allocator, self.connection.stream.writer(), self.connection.stream.reader());
         try request.print(self.connection.stream.writer());
         _ = try Handler.Fn(&request);
-
         // return HTTPContext;
     }
 };
